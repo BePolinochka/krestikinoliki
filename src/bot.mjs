@@ -1,27 +1,22 @@
-/*
-Пользователь заходит в бот, нажимает "Старт".
-Бот направляет ползователю поле для игры.
-Пользователь выбирает ячейку для своего хода с помощью Inline keyboard и отправляет результат боту.
-Бот делает свой ход в свободную ячейку и отвечает пользователю.
-*/
+/**
+ * @typedef {import("grammy").Context} Context
+ * @typedef {import("@grammyjs/types").Chat} Chat
+ * @typedef {import("grammy").SessionFlavor} SessionFlavor
+ *
+ * @typedef {{isGame: boolean, matrix: Array<Array<string>>} & Chat} SessionData
+ * @typedef {Context & SessionFlavor<SessionData>} BotContext
+ */
 
 import {Bot, InlineKeyboard, session} from "grammy";
 import {freeStorage} from "@grammyjs/storage-free";
+import {createMatrix, getAvailableCell, isWinner, matrixToKeyboard} from "./game.mjs";
 
 export const {
     TELEGRAM_BOT_TOKEN: token,
     TELEGRAM_SECRET_TOKEN: secretToken = String(token).split(":").pop()
 } = process.env;
 
-const size = 3;
-
-const symbols = {
-    empty: " ",
-    player: "❌",
-    computer: "⭕️",
-}
-
-export const bot = new Bot(token);
+export const bot = /** @type {Bot<BotContext>} */ new Bot(token);
 
 const safe = bot.errorBoundary(e => console.error(e));
 
@@ -38,53 +33,9 @@ safe.command("start", ctx =>
     })
 );
 
-function matrixToKeyboard(matrix) {
-    const reply_markup = new InlineKeyboard()
-    for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
-            reply_markup.text(
-                symbols[matrix[row][col] || "empty"],
-                [row, col].join(":")
-            )
-        }
-        reply_markup.row()
-    }
-    return reply_markup;
-}
-
-function getAvailableCell(matrix) {
-    const availableCells = [];
-    for (let row = 0; row < size; row++) {
-        for (let col = 0; col < size; col++) {
-            if (!matrix[row][col]) availableCells.push([row, col]);
-        }
-    }
-    return availableCells[Math.floor(Math.random() * availableCells.length)];
-}
-
-function isWinner(matrix, side) {
-    for (let row = 0; row < size; row++) {
-        if (matrix[row].every(cell => cell === side)) return true;
-    }
-    for (let col = 0; col < size; col++) {
-        if (matrix.every(row => row[col] === side)) return true;
-    }
-    if (
-        matrix[0][0] === side &&
-        matrix[1][1] === side &&
-        matrix[2][2] === side
-    ) return true;
-    if (
-        matrix[0][2] === side &&
-        matrix[1][1] === side &&
-        matrix[2][0] === side
-    ) return true;
-}
-
 safe.callbackQuery("start", async ctx => {
     ctx.session.isGame = true;
-    ctx.session.matrix = new Array(size).fill(null)
-        .map(() => new Array(size).fill(null));
+    ctx.session.matrix = createMatrix()
     await ctx.reply("*Уведомелние о старте игры*", {
         reply_markup: matrixToKeyboard(ctx.session.matrix)
     })
