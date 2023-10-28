@@ -21,7 +21,6 @@ export const bot = /** @type {Bot<BotContext>} */ new Bot(token);
 
 const safe = bot.errorBoundary(e => console.error(e));
 
-
 safe.use(session({
     initial: () => ({isGame: false}),
     storage: freeStorage(bot.token),
@@ -34,6 +33,7 @@ safe.command("start", ctx =>
 );
 
 safe.callbackQuery("start", async ctx => {
+    await ctx.answerCallbackQuery();
     await ctx.reply("Choose your mark", {
         reply_markup: new InlineKeyboard().text("❌").text("⭕️")
     })
@@ -41,6 +41,7 @@ safe.callbackQuery("start", async ctx => {
 })
 
 safe.callbackQuery(["❌", "⭕️"], async ctx => {
+    await ctx.answerCallbackQuery({text: `You choiced ${ctx.callbackQuery.data}`});
     ctx.session.isGame = true;
     ctx.session.matrix = createMatrix()
     ctx.session.symbol = ctx.callbackQuery.data

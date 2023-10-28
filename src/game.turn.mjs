@@ -3,41 +3,50 @@ import {setTimeout} from 'node:timers/promises';
 
 
 export const gameTurn = async (ctx) => {
-    // await ctx.answerCallbackQuery({text: ctx.callbackQuery.data});
-    const [row, col] = ctx.callbackQuery.data.split(":").map(Number);
 
-    if (ctx.session.matrix[row][col])
-        return ctx.answerCallbackQuery({text: "The cell is already filled. Choose another one"});
+    try {
 
-    ctx.session.matrix[row][col] = "player"
+        const [row, col] = ctx.callbackQuery.data.split(":").map(Number);
 
-    if (isWinner(ctx.session.matrix, "player"))
-        return ctx.editMessageText("You win!", {
+        if (ctx.session.matrix[row][col])
+            return ctx.answerCallbackQuery({text: "The cell is already filled. Choose another one"});
+
+        ctx.session.matrix[row][col] = "player"
+
+        await ctx.editMessageText("Your turn", {
+            reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
+        })
+
+        await setTimeout(1000);
+
+        if (isWinner(ctx.session.matrix, "player"))
+            return ctx.editMessageText("You win!", {
+                reply_markup: startKeyboard
+            })
+
+        const computerCell = getAvailableCell(ctx.session.matrix)
+
+        if (!computerCell) return ctx.editMessageText("Draw", {
             reply_markup: startKeyboard
         })
 
-    await ctx.editMessageText("Your turn", {
-        reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
-    })
-    await setTimeout(1000);
+        const [x, y] = computerCell
 
-    const computerCell = getAvailableCell(ctx.session.matrix)
+        ctx.session.matrix[x][y] = "computer"
 
-    if (!computerCell) return ctx.editMessageText("Draw", {
-        reply_markup: startKeyboard
-    })
+        await ctx.editMessageText("Your turn", {
+            reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
+        })
 
-    const [x, y] = computerCell
+        await setTimeout(1000);
 
-    ctx.session.matrix[x][y] = "computer"
+        if (isWinner(ctx.session.matrix, "computer"))
+            return ctx.editMessageText("You loose!", {
+                reply_markup: startKeyboard
+            });
 
-    if (isWinner(ctx.session.matrix, "computer"))
-        return ctx.editMessageText("You loose!", {
-            reply_markup: startKeyboard
-        });
-
-    return ctx.editMessageText("Your turn", {
-        reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
-    })
+    } finally {
+        await ctx.answerCallbackQuery();
+    }
 
 }
