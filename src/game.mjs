@@ -3,6 +3,7 @@ import {InlineKeyboard} from "grammy";
 export const size = 3;
 
 const symbols = ["❌", "⭕️"]
+export const startKeyboard = new InlineKeyboard().text("Start the Game", "start");
 
 export const createMatrix = () => new Array(size).fill(null).map(() => new Array(size).fill(null));
 

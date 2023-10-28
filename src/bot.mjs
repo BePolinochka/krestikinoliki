@@ -9,7 +9,8 @@
 
 import {Bot, InlineKeyboard, session} from "grammy";
 import {freeStorage} from "@grammyjs/storage-free";
-import {createMatrix, getAvailableCell, isWinner, matrixToKeyboard} from "./game.mjs";
+import {createMatrix, getAvailableCell, isWinner, matrixToKeyboard, startKeyboard} from "./game.mjs";
+import {gameTurn} from "./game.turn.mjs";
 
 export const {
     TELEGRAM_BOT_TOKEN: token,
@@ -20,7 +21,6 @@ export const bot = /** @type {Bot<BotContext>} */ new Bot(token);
 
 const safe = bot.errorBoundary(e => console.error(e));
 
-const startKeyboard = new InlineKeyboard().text("Start the Game", "start");
 
 safe.use(session({
     initial: () => ({isGame: false}),
@@ -50,39 +50,6 @@ safe.callbackQuery(["❌", "⭕️"], async ctx => {
     return ctx.deleteMessage();
 })
 
-safe.on("callback_query:data", async (ctx) => {
-    // await ctx.answerCallbackQuery({text: ctx.callbackQuery.data});
-    const [row, col] = ctx.callbackQuery.data.split(":").map(Number);
-
-    if (ctx.session.matrix[row][col])
-        return ctx.answerCallbackQuery({text: "The cell is already filled. Choose another one"});
-
-    ctx.session.matrix[row][col] = "player"
-
-    if (isWinner(ctx.session.matrix, "player"))
-        return ctx.editMessageText("You win!", {
-            reply_markup: startKeyboard
-        })
-
-    const computerCell = getAvailableCell(ctx.session.matrix)
-
-    if (!computerCell) return ctx.editMessageText("Draw", {
-        reply_markup: startKeyboard
-    })
-
-    const [x, y] = computerCell
-
-    ctx.session.matrix[x][y] = "computer"
-
-    if (isWinner(ctx.session.matrix, "computer"))
-        return ctx.editMessageText("You loose!", {
-            reply_markup: startKeyboard
-        });
-
-    return ctx.editMessageText("Your turn", {
-        reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
-    })
-
-})
+safe.on("callback_query:data", gameTurn)
 
 
