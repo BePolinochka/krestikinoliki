@@ -16,7 +16,10 @@ if (!allowedEnvs.includes(VERCEL_ENV)) process.exit();
 const url = getURL({path: "api/update"});
 
 // Webhook setup options
-const options = {secret_token: secretToken};
+const options = {
+    secret_token: secretToken,
+    drop_pending_updates: true
+};
 
 // Installing a webhook
 if (await bot.api.setWebhook(url, options)) {
