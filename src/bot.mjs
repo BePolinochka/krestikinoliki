@@ -34,13 +34,20 @@ safe.command("start", ctx =>
 );
 
 safe.callbackQuery("start", async ctx => {
-    ctx.session.isGame = true;
-    ctx.session.matrix = createMatrix()
-    await ctx.reply("*Уведомелние о старте игры*", {
-        reply_markup: matrixToKeyboard(ctx.session.matrix)
+    await ctx.reply("*Выберите крестик или нолик*", {
+        reply_markup: new InlineKeyboard().text("❌").text("⭕️")
     })
     return ctx.deleteMessage();
+})
 
+safe.callbackQuery(["❌", "⭕️"], async ctx => {
+    ctx.session.isGame = true;
+    ctx.session.matrix = createMatrix()
+    ctx.session.symbol = ctx.callbackQuery.data
+    await ctx.reply("*Уведомелние о старте игры*", {
+        reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
+    })
+    return ctx.deleteMessage();
 })
 
 safe.on("callback_query:data", async (ctx) => {
@@ -73,7 +80,7 @@ safe.on("callback_query:data", async (ctx) => {
         });
 
     return ctx.editMessageText("*Ход игрока*", {
-        reply_markup: matrixToKeyboard(ctx.session.matrix)
+        reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
     })
 
 })

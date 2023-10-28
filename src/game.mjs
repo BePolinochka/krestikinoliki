@@ -2,20 +2,20 @@ import {InlineKeyboard} from "grammy";
 
 export const size = 3;
 
-const symbols = {
-    empty: " ",
-    player: "❌",
-    computer: "⭕️",
-}
+const symbols = ["❌", "⭕️"]
 
 export const createMatrix = () => new Array(size).fill(null).map(() => new Array(size).fill(null));
 
-export function matrixToKeyboard(matrix) {
+export function matrixToKeyboard(matrix, symbol) {
+    const marks = {
+        player: symbol,
+        computer: symbols.filter(mark => mark !== symbol)[0]
+    }
     const reply_markup = new InlineKeyboard()
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
             reply_markup.text(
-                symbols[matrix[row][col] || "empty"],
+                marks[matrix[row][col]] || "・",
                 [row, col].join(":")
             )
         }
