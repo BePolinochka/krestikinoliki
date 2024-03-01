@@ -9,7 +9,7 @@
 
 import {Bot, InlineKeyboard, session} from "grammy";
 import {freeStorage} from "@grammyjs/storage-free";
-import {createMatrix, getAvailableCell, isWinner, matrixToKeyboard, startKeyboard} from "./game.mjs";
+import {createMatrix, matrixToKeyboard, startKeyboard} from "./game.mjs";
 import {gameTurn} from "./game.turn.mjs";
 
 export const {

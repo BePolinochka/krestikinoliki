@@ -1,6 +1,5 @@
-import {getAvailableCell, isWinner, matrixToKeyboard, startKeyboard} from "./game.mjs";
+import {getAvailableCell, getAvailableCells, isWinner, matrixToKeyboard, startKeyboard} from "./game.mjs";
 import {setTimeout} from 'node:timers/promises';
-
 
 export const gameTurn = async (ctx) => {
 
@@ -24,26 +23,29 @@ export const gameTurn = async (ctx) => {
                 reply_markup: startKeyboard
             })
 
-        const computerCell = getAvailableCell(ctx.session.matrix)
-
-        if (!computerCell) return ctx.editMessageText("Draw", {
+        if (!getAvailableCells(ctx.session.matrix).length)
+            return ctx.editMessageText("Draw", {
             reply_markup: startKeyboard
-        })
+            }).catch(() => null)
 
-        const [x, y] = computerCell
+        let x, y;
+
+        do {
+            [x, y] = await getAvailableCell(ctx.session.matrix)
+        } while (ctx.session.matrix[x][y])
 
         ctx.session.matrix[x][y] = "computer"
 
         await ctx.editMessageText("Your turn", {
             reply_markup: matrixToKeyboard(ctx.session.matrix, ctx.session.symbol)
-        })
+        }).catch(() => null)
 
         await setTimeout(1000);
 
         if (isWinner(ctx.session.matrix, "computer"))
             return ctx.editMessageText("You loose!", {
                 reply_markup: startKeyboard
-            });
+            }).catch(() => null);
 
     } finally {
         await ctx.answerCallbackQuery();
