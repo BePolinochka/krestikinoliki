@@ -1,4 +1,9 @@
 {
   "installCommand": "npm i --omit=dev",
-  "buildCommand": "node scripts/build.mjs"
+  "buildCommand": "node scripts/build.mjs",
+  "functions": {
+    "api/**/**": {
+      "maxDuration": 60
+    }
+  }
 }
